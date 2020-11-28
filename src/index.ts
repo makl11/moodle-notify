@@ -139,11 +139,14 @@ function getSectionData(section: HTMLElement): CourseSection {
 	const id = parseInt(section.id.replace(/^section-(\d+)$/, "$1"));
 	const title = section.getAttribute("aria-label") ?? "NO TITLE FOUND!";
 	const available = getSectionAvailability(section);
+	const summaryString = section.querySelector(".content .summary")?.innerHTML;
+	const summary = summaryString?.length > 0 ? summaryString : undefined;
 	const content = section.querySelector(".content").innerHTML;
 	return {
 		id,
 		title,
 		available,
+		summary,
 		content,
 	};
 }

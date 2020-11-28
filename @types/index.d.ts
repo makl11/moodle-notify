@@ -9,6 +9,7 @@ interface Course {
 interface CourseSection {
 	id: number;
 	title: string;
+	summary?: string;
 	content: string;
 	available: AvailabilityStatus;
 }
