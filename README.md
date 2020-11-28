@@ -21,5 +21,5 @@ Start the script with the following command: `npm run start`
 -   [ ] remove selenium for login
 -   [ ] diff course content with previos content
 -   [ ] notify on change
--   [x] fetch all course data
--   [x] login using selenium
+-   [x] ~~fetch all course data~~
+-   [x] ~~login using selenium~~
