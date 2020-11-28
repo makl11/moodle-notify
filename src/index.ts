@@ -137,7 +137,7 @@ function getSectionAvailability(section: HTMLElement): AvailabilityStatus {
 
 function getSectionData(section: HTMLElement): CourseSection {
 	const id = parseInt(section.id.replace(/^section-(\d+)$/, "$1"));
-	const title = section.getAttribute("aria-label") ?? "NO TITLE FOUND!";
+	const title = section.querySelector(".content .sectionname").text;
 	const available = getSectionAvailability(section);
 	const summaryString = section.querySelector(".content .summary")?.innerHTML;
 	const summary = summaryString?.length > 0 ? summaryString : undefined;
