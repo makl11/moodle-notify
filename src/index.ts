@@ -76,6 +76,7 @@ async function createAuthMoodleClient(
 		},
 	});
 	return {
+		...authenticatedMoodleClient,
 		async get(url: string, config?: AxiosRequestConfig): Promise<unknown> {
 			return await (await authenticatedMoodleClient.get(url, config))
 				.data;
