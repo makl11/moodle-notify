@@ -10,4 +10,5 @@ interface CourseSection {
 	id: number;
 	title: string;
 	content: string;
+	available: AvailabilityStatus;
 }

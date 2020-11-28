@@ -9,6 +9,12 @@ const DEBUG: boolean = JSON.parse(
 const USERNAME: string = process.env["MOODLE_NOTIFY_USERNAME"] ?? "";
 const PASSWORD: string = process.env["MOODLE_NOTIFY_PASSWORD"] ?? "";
 
+enum AvailabilityStatus {
+	NOT_AVAILABLE,
+	AVAILABLE,
+	PARTIAL,
+}
+
 async function authenticateDriver(
 	driver: WebDriver,
 	username: string,
@@ -115,13 +121,29 @@ async function getCourseData(
 	};
 }
 
+function getSectionAvailability(section: HTMLElement): AvailabilityStatus {
+	const container = section.querySelector(".content .section_availability");
+	if (container.childNodes.length === 0) return AvailabilityStatus.AVAILABLE;
+	const availabilityInfo = container
+		.querySelector(".availabilityinfo")
+		.classNames.filter((cN) => cN !== "availabilityinfo");
+	if (availabilityInfo.includes("isrestricted"))
+		return AvailabilityStatus.PARTIAL;
+	if (availabilityInfo.includes("ishidden"))
+		return AvailabilityStatus.NOT_AVAILABLE;
+	console.error("UNHADNLED AVAILABLITY", availabilityInfo);
+	return AvailabilityStatus.AVAILABLE;
+}
+
 function getSectionData(section: HTMLElement): CourseSection {
 	const id = parseInt(section.id.replace(/^section-(\d+)$/, "$1"));
 	const title = section.getAttribute("aria-label") ?? "NO TITLE FOUND!";
+	const available = getSectionAvailability(section);
 	const content = section.querySelector(".content").innerHTML;
 	return {
 		id,
 		title,
+		available,
 		content,
 	};
 }
