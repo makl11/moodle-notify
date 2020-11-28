@@ -141,7 +141,7 @@ function getSectionData(section: HTMLElement): CourseSection {
 	const available = getSectionAvailability(section);
 	const summaryString = section.querySelector(".content .summary")?.innerHTML;
 	const summary = summaryString?.length > 0 ? summaryString : undefined;
-	const content = section.querySelector(".content").innerHTML;
+	const content = getSectionContent(section);
 	return {
 		id,
 		title,
@@ -149,6 +149,39 @@ function getSectionData(section: HTMLElement): CourseSection {
 		summary,
 		content,
 	};
+}
+function getSectionContent(section: HTMLElement): CourseSectionContent {
+	const content = section.querySelector(".content .section");
+	if (!content) return undefined;
+	const blocks = content.querySelectorAll(".activity");
+	const ContentBlocks: Array<ContentBlock> = blocks.map(
+		(block: HTMLElement) => {
+			const id = parseInt(block.id.replace(/^module-(\d+)$/, "$1"));
+			const modtype = block.classNames
+				.find((cN) => /modtype_[a-z]+/.test(cN))
+				?.replace(/modtype_([a-z]+)/, "$1");
+			const text = block.querySelector(".contentwithoutlink");
+			const link = block.querySelector(".activityinstance a");
+			if (text && text.childNodes.length > 0 && !link) {
+				const textHtml = text.querySelector(".no-overflow .no-overflow")
+					?.innerHTML;
+				return <TextContentBlock>{
+					id,
+					modtype,
+					text: textHtml,
+				};
+			}
+			if (link && link.childNodes.length > 0 && !text)
+				return <LinkContentBlock>{
+					id,
+					modtype,
+					url: link.getAttribute("href"),
+					title: link.querySelector(".instancename")?.text,
+				};
+			return <ContentBlock>{ id, modtype: "empty" };
+		}
+	);
+	return ContentBlocks.filter((cB) => cB.modtype !== "empty");
 }
 
 async function getMoodleData() {
