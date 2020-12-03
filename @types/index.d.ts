@@ -30,3 +30,7 @@ interface LinkContentBlock extends ContentBlock {
 interface TextContentBlock extends ContentBlock {
 	text: string;
 }
+
+interface HTMLContentBlock extends ContentBlock {
+	html: string;
+}

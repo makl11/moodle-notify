@@ -165,12 +165,13 @@ function getSectionContent(section: HTMLElement): CourseSectionContent {
 			const text = block.querySelector(".contentwithoutlink");
 			const link = block.querySelector(".activityinstance a");
 			if (text && text.childNodes.length > 0 && !link) {
-				const textHtml = removeNoOverflowWrapperElements(
+				const html = removeNoOverflowWrapperElements(
 					text.querySelector(".no-overflow")
 				).innerHTML;
+				return <HTMLContentBlock>{
 					id,
 					modtype,
-					text: textHtml,
+					html,
 				};
 			}
 			if (link && link.childNodes.length > 0 && !text)
