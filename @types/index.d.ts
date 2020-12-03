@@ -35,3 +35,6 @@ interface TextContentBlock extends ContentBlock {
 interface HTMLContentBlock extends ContentBlock {
 	html: string;
 }
+interface MarkdownContentBlock extends ContentBlock {
+	markdown: string;
+}

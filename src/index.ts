@@ -2,6 +2,10 @@ import Axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { Builder, By, IWebDriverCookie, WebDriver } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
+const TurndownService = require("turndown");
+
+var turndownService = new TurndownService();
+var toMD = (html: string | undefined) => turndownService.turndown(html ?? "");
 
 const DEBUG: boolean = JSON.parse(
 	process.env["MOODLE_NOTIFY_DEBUG"]?.toLocaleLowerCase() ?? "false"
@@ -148,7 +152,7 @@ function getSectionData(section: HTMLElement): CourseSection {
 		id,
 		title,
 		available,
-		summary,
+		summary: toMD(summary),
 		content,
 	};
 }
@@ -169,10 +173,10 @@ function getSectionContent(section: HTMLElement): CourseSectionContent {
 				const html = removeNoOverflowWrapperElements(
 					text.querySelector(".no-overflow")
 				).innerHTML;
-				return <HTMLContentBlock>{
+				return <MarkdownContentBlock>{
 					id,
 					modtype,
-					html,
+					markdown: toMD(html),
 				};
 			}
 			if (link && link.childNodes.length > 0 && !text) {
@@ -183,7 +187,7 @@ function getSectionContent(section: HTMLElement): CourseSectionContent {
 				return <LinkContentBlock>{
 					id,
 					modtype,
-					description,
+					description: toMD(description),
 					url: link.getAttribute("href"),
 					title: link.querySelector(".instancename")?.text,
 				};
@@ -238,8 +242,12 @@ async function getMoodleData() {
 getMoodleData().then((moodleData) => {
 	moodleData.forEach((course) => {
 		require("fs").writeFileSync(
-			`./data/data-course-${course.id}.json`,
+			`./data/data-course-${course.id}-md.json`,
 			JSON.stringify(course)
 		);
 	});
+	require("fs").writeFileSync(
+		`./data/data-md.json`,
+		JSON.stringify(moodleData)
+	);
 });
