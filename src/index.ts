@@ -139,7 +139,9 @@ function getSectionData(section: HTMLElement): CourseSection {
 	const id = parseInt(section.id.replace(/^section-(\d+)$/, "$1"));
 	const title = section.querySelector(".content .sectionname").text;
 	const available = getSectionAvailability(section);
-	const summaryString = section.querySelector(".content .summary")?.innerHTML;
+	const summaryString = removeNoOverflowWrapperElements(
+		section.querySelector(".content .summary")
+	)?.innerHTML;
 	const summary = summaryString?.length > 0 ? summaryString : undefined;
 	const content = getSectionContent(section);
 	return {
@@ -163,9 +165,9 @@ function getSectionContent(section: HTMLElement): CourseSectionContent {
 			const text = block.querySelector(".contentwithoutlink");
 			const link = block.querySelector(".activityinstance a");
 			if (text && text.childNodes.length > 0 && !link) {
-				const textHtml = text.querySelector(".no-overflow .no-overflow")
-					?.innerHTML;
-				return <TextContentBlock>{
+				const textHtml = removeNoOverflowWrapperElements(
+					text.querySelector(".no-overflow")
+				).innerHTML;
 					id,
 					modtype,
 					text: textHtml,
@@ -182,6 +184,38 @@ function getSectionContent(section: HTMLElement): CourseSectionContent {
 		}
 	);
 	return ContentBlocks.filter((cB) => cB.modtype !== "empty");
+}
+
+const removeNoOverflowWrapperElements = (element: HTMLElement) =>
+	removeNestedWrapperElements(element, "no-overflow");
+
+function removeNestedWrapperElements(
+	element: HTMLElement,
+	className: string
+): HTMLElement {
+	if (
+		element &&
+		element.classNames.length === 1 &&
+		element.structure.includes(className)
+	) {
+		if (
+			element.childNodes.length === 1 &&
+			// @ts-ignore firstChild is a HTMLElement not a Node
+			element.firstChild?.structure?.includes(className)
+		) {
+			const orphan = element.querySelector("*");
+			return removeNestedWrapperElements(orphan, className);
+		} else {
+			element.setAttribute(
+				"class",
+				element.getAttribute("class")?.replace(className, "") ?? ""
+			);
+			element.classNames = element.classNames.filter(
+				(cN) => cN !== className
+			);
+		}
+	}
+	return element;
 }
 
 async function getMoodleData() {
