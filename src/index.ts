@@ -5,8 +5,8 @@ import { Options } from "selenium-webdriver/chrome";
 const TurndownService = require("turndown");
 
 var turndownService = new TurndownService();
-var toMD = (html: string | undefined) => turndownService.turndown(html ?? "");
-
+var toMD = (html: string | undefined) =>
+	turndownService.turndown(html ?? "").replace(/\*\*__\*\*/g, "**_ _**");
 const DEBUG: boolean = JSON.parse(
 	process.env["MOODLE_NOTIFY_DEBUG"]?.toLocaleLowerCase() ?? "false"
 );
