@@ -25,6 +25,7 @@ interface LinkContentBlock extends ContentBlock {
 	url: string;
 	title: string;
 	icon?: Buffer;
+	description: string;
 }
 
 interface TextContentBlock extends ContentBlock {

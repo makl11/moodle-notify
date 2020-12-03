@@ -164,6 +164,7 @@ function getSectionContent(section: HTMLElement): CourseSectionContent {
 				?.replace(/modtype_([a-z]+)/, "$1");
 			const text = block.querySelector(".contentwithoutlink");
 			const link = block.querySelector(".activityinstance a");
+			const contentAfterLink = block.querySelector(".contentafterlink");
 			if (text && text.childNodes.length > 0 && !link) {
 				const html = removeNoOverflowWrapperElements(
 					text.querySelector(".no-overflow")
@@ -174,13 +175,19 @@ function getSectionContent(section: HTMLElement): CourseSectionContent {
 					html,
 				};
 			}
-			if (link && link.childNodes.length > 0 && !text)
+			if (link && link.childNodes.length > 0 && !text) {
+				const description = contentAfterLink
+					? removeNoOverflowWrapperElements(contentAfterLink)
+							.innerHTML
+					: undefined;
 				return <LinkContentBlock>{
 					id,
 					modtype,
+					description,
 					url: link.getAttribute("href"),
 					title: link.querySelector(".instancename")?.text,
 				};
+			}
 			return <ContentBlock>{ id, modtype: "empty" };
 		}
 	);
