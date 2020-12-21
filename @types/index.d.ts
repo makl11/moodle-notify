@@ -8,6 +8,7 @@ interface Course {
 
 interface CourseSection {
 	id: number;
+	hash: string;
 	title: string;
 	summary?: string;
 	content?: CourseSectionContent;
