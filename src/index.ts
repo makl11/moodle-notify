@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from "fs";
+import TelegramBot from "node-telegram-bot-api";
 import { Builder, By, IWebDriverCookie, WebDriver } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
 import { createAuthMoodleClientWithCookies, getMoodleData } from "./MoodleAPI";
@@ -8,6 +9,8 @@ const DEBUG: boolean = JSON.parse(
 );
 const USERNAME: string = process.env["MOODLE_NOTIFY_USERNAME"] ?? "";
 const PASSWORD: string = process.env["MOODLE_NOTIFY_PASSWORD"] ?? "";
+const TELEGRAM_TOKEN: string =
+	process.env["MOODLE_NOTIFY_TELEGRAM_TOKEN"] ?? "";
 
 async function authenticateDriver(
 	driver: WebDriver,
@@ -89,6 +92,34 @@ function getChangedCourseSection(
 		?.sections.find((section) => section.id === sectionId);
 }
 
+async function sendTelegramNotification(changedCourses: any) {
+	const telegramBot = new TelegramBot(TELEGRAM_TOKEN);
+
+	await telegramBot.sendMessage(
+		777729419,
+		changedCourses.reduce(
+			(out: string, course: any) =>
+				out.concat(
+					`[${course.title}](https\:\/\/elearning\.hs\-ruhrwest\.de\/course\/view\.php?id=${course.id}\#section\-${course.changedSections[0]?.id})\n`
+				),
+			"Die folgenden Kurse wurden aktualisiert:\n"
+		),
+		{
+			parse_mode: "Markdown",
+			reply_markup: {
+				inline_keyboard: [
+					[
+						{
+							text: "Moodle Dashboard öffnen",
+							url: "https://elearning.hs-ruhrwest.de/my/",
+						},
+					],
+				],
+			},
+		}
+	);
+}
+
 (async () => {
 	const cookies = createHeaderCookieString(
 		await getAuthCookies(USERNAME, PASSWORD)
@@ -115,8 +146,7 @@ function getChangedCourseSection(
 			),
 		}));
 
-	// TODO notify about changes
-
+	sendTelegramNotification(changedCourses);
 	writeFileSync(`./data/data.json`, JSON.stringify(moodleData));
 
 	moodleData.forEach((course) => {
