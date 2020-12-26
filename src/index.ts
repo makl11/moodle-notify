@@ -166,35 +166,48 @@ async function createAuthMoodleClientFromLocalCookiesOrAuthenticate() {
 	}
 }
 
-async function sendTelegramNotification(changedCourses: any) {
+async function sendTelegramNotification(
+	changedCourses: any,
+	msg?: TelegramBot.Message
+) {
 	const telegramBot = new TelegramBot(TELEGRAM_TOKEN);
 
-	await telegramBot.sendMessage(
-		777729419,
-		changedCourses.reduce(
-			(out: string, course: any) =>
-				out.concat(
-					`[${course.title}](https\:\/\/elearning\.hs\-ruhrwest\.de\/course\/view\.php?id=${course.id}\#section\-${course.changedSections[0]?.id})\n`
-				),
-			"Die folgenden Kurse wurden aktualisiert:\n"
-		),
-		{
-			parse_mode: "Markdown",
-			reply_markup: {
-				inline_keyboard: [
-					[
-						{
-							text: "Moodle Dashboard öffnen",
-							url: "https://elearning.hs-ruhrwest.de/my/",
-						},
-					],
-				],
-			},
-		}
+	if (!changedCourses.length && msg) {
+		telegramBot.sendMessage(msg.chat.id, "No changed courses found");
+	}
+
+	const allUserIds: Array<number> = JSON.parse(
+		readFileSync(`./data/users.json`).toString()
 	);
+
+	allUserIds.forEach(async (id) => {
+		await telegramBot.sendMessage(
+			id,
+			changedCourses.reduce(
+				(out: string, course: any) =>
+					out.concat(
+						`[${course.title}](https\:\/\/elearning\.hs\-ruhrwest\.de\/course\/view\.php?id=${course.id}\#section\-${course.changedSections[0]?.id})\n`
+					),
+				"Die folgenden Kurse wurden aktualisiert:\n"
+			),
+			{
+				parse_mode: "Markdown",
+				reply_markup: {
+					inline_keyboard: [
+						[
+							{
+								text: "Moodle Dashboard öffnen",
+								url: "https://elearning.hs-ruhrwest.de/my/",
+							},
+						],
+					],
+				},
+			}
+		);
+	});
 }
 
-(async () => {
+export const run = async (msg?: TelegramBot.Message) => {
 	const moodleClient = await createAuthMoodleClientFromLocalCookiesOrAuthenticate();
 
 	const moodleData = await getMoodleData(moodleClient);
@@ -217,13 +230,16 @@ async function sendTelegramNotification(changedCourses: any) {
 			),
 		}));
 
-	sendTelegramNotification(changedCourses);
+	await sendTelegramNotification(changedCourses, msg);
+
 	writeFileSync(`./data/data.json`, JSON.stringify(moodleData));
 
-	moodleData.forEach((course) => {
-		writeFileSync(
-			`./data/data-course-${course.id}.json`,
-			JSON.stringify(course)
-		);
-	});
-})();
+	// moodleData.forEach((course) => {
+	// 	writeFileSync(
+	// 		`./data/data-course-${course.id}.json`,
+	// 		JSON.stringify(course)
+	// 	);
+	// });
+};
+
+run();
