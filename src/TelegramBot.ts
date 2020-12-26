@@ -16,12 +16,17 @@ telegramBot.setMyCommands([
 	{
 		command: "subscribe",
 		description:
-			"Join the list of users that get notified about changes in their Moodle courses",
+			"Join the list of users that get notified about changes in the Moodle courses",
 	},
 	{
 		command: "unsubscribe",
 		description:
-			"Leave the list of users that get notified about changes in their Moodle courses",
+			"Leave the list of users that get notified about changes in the Moodle courses",
+	},
+	{
+		command: "check",
+		description:
+			"Check for changes in the Moodle courses",
 	},
 ]);
 
