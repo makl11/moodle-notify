@@ -208,6 +208,9 @@ async function sendTelegramNotification(
 }
 
 export const run = async (msg?: TelegramBot.Message) => {
+	console.log(
+		`[MOODLE-NOTIFY] (${new Date().toLocaleString()}): Checking for updates...`
+	);
 	const moodleClient = await createAuthMoodleClientFromLocalCookiesOrAuthenticate();
 
 	const moodleData = await getMoodleData(moodleClient);
