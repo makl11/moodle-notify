@@ -1,10 +1,9 @@
 import TelegramBot from "node-telegram-bot-api";
 import { AxiosResponse } from "axios";
-import { readFileSync, writeFileSync } from "fs";
+import { promises as fs } from 'fs';
 import { Builder, By, IWebDriverCookie, WebDriver } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
 import { createAuthMoodleClientWithCookies, getMoodleData } from "./MoodleAPI";
-
 const DEBUG: boolean = JSON.parse(
 	process.env["MOODLE_NOTIFY_DEBUG"]?.toLocaleLowerCase() ?? "false"
 );
@@ -144,7 +143,7 @@ function getChangedCourseSection(
 
 async function createAuthMoodleClientFromLocalCookiesOrAuthenticate() {
 	try {
-		const localCookies = readFileSync(`./data/cookies.txt`).toString();
+		const localCookies = (await fs.readFile(`./data/cookies.txt`).catch()).toString();
 		const moodleClient = await createAuthMoodleClientWithCookies(
 			localCookies
 		);
@@ -161,7 +160,7 @@ async function createAuthMoodleClientFromLocalCookiesOrAuthenticate() {
 		const cookies = createHeaderCookieString(
 			await getAuthCookies(USERNAME, PASSWORD)
 		);
-		writeFileSync(`./data/cookies.txt`, cookies);
+		await fs.writeFile(`./data/cookies.txt`, cookies).catch();
 		return await createAuthMoodleClientWithCookies(cookies);
 	}
 }
@@ -179,7 +178,7 @@ async function sendTelegramNotification(
 	} else if (!changedCourses.length) return null;
 
 	const allUserIds: Array<number> = JSON.parse(
-		readFileSync(`./data/users.json`).toString()
+		(await fs.readFile(`./data/users.json`).catch()).toString()
 	);
 
 	allUserIds.forEach(async (id) => {
@@ -223,7 +222,7 @@ export const run = async (msg?: TelegramBot.Message) => {
 	const moodleData = await getMoodleData(moodleClient);
 
 	const oldMoodleData: MoodleCourses = JSON.parse(
-		readFileSync(`./data/data.json`).toString()
+		(await fs.readFile(`./data/data.json`).catch()).toString()
 	);
 
 	const changedCourses = oldMoodleData
@@ -242,7 +241,7 @@ export const run = async (msg?: TelegramBot.Message) => {
 
 	await sendTelegramNotification(telegramBot, changedCourses, msg);
 
-	writeFileSync(`./data/data.json`, JSON.stringify(moodleData));
+	await fs.writeFile(`./data/data.json`, JSON.stringify(moodleData)).catch();
 
 	// moodleData.forEach((course) => {
 	// 	writeFileSync(
