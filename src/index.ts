@@ -64,17 +64,66 @@ function createHeaderCookieString(cookies: Array<IWebDriverCookie>): string {
 	);
 }
 
-function diffCourses(oldCourse: Course, newCourse: Course) {
-	const extractHashAndId = ({ id, hash }: { id: number; hash: string }) => ({
-		id,
-		hash,
-	});
-	const oldSections = oldCourse.sections.map(extractHashAndId);
-	const newSections = newCourse.sections.map(extractHashAndId);
+const compareSections = (
+	oldSection: CourseSection | undefined,
+	newSection: CourseSection
+) =>
+	oldSection === undefined || newSection === undefined
+		? false
+		: oldSection.title === newSection.title &&
+		  oldSection.summary === newSection.summary &&
+		  oldSection.available === newSection.available &&
+		  compareSectionContent(oldSection.content, newSection.content);
 
-	const changedSections = newSections.filter(
-		({ hash, id }) => oldSections.find((oS) => oS.id === id)?.hash !== hash
-	);
+const compareTextBlocks = (a: TextContentBlock, b: TextContentBlock) => {
+	return a.text === b.text;
+};
+const compareHTMLBlocks = (a: HTMLContentBlock, b: HTMLContentBlock) => {
+	return a.html === b.html;
+};
+const compareLinkBlocks = (a: LinkContentBlock, b: LinkContentBlock) => {
+	return a.url === b.url && a.title === b.title;
+};
+
+function compareSectionContent(
+	oldSectionContent: CourseSectionContent,
+	newSectionContent: CourseSectionContent
+) {
+	if (oldSectionContent === undefined && newSectionContent === undefined)
+		return true;
+	else if (oldSectionContent === undefined || newSectionContent === undefined)
+		return false;
+	else
+		return newSectionContent.reduce(
+			(equal: boolean, newContentBlock: any): boolean => {
+				const oldContentBlock = oldSectionContent?.find(
+					(oCB) => oCB.id === newContentBlock.id
+				);
+				return equal && oldContentBlock && newContentBlock?.html
+					? // @ts-ignore
+					  compareHTMLBlocks(oldContentBlock, newContentBlock)
+					: newContentBlock?.text
+					? // @ts-ignore
+					  compareTextBlocks(oldContentBlock, newContentBlock)
+					: newContentBlock?.url
+					? // @ts-ignore
+					  compareLinkBlocks(oldContentBlock, newContentBlock)
+					: false;
+			},
+			true
+		);
+}
+
+function diffCourses(oldCourse: Course, newCourse: Course) {
+	const oldSections = oldCourse.sections;
+	const newSections = newCourse.sections;
+
+	const changedSections = newSections.filter((section) => {
+		const oldSection = oldSections.find((oS) => oS.id === section.id);
+		const hashCompResult = oldSection?.hash === section.hash;
+		if (!hashCompResult) return !compareSections(oldSection, section);
+		return !hashCompResult;
+	});
 	return {
 		id: newCourse.id,
 		title: newCourse.title,
