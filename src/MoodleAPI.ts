@@ -1,4 +1,4 @@
-import Axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import Axios, { AxiosRequestConfig } from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import md5 from "md5";
 
@@ -20,18 +20,16 @@ export async function createAuthMoodleClientWithCookies(
 	});
 	return {
 		...authenticatedMoodleClient,
-		async get(url: string, config?: AxiosRequestConfig): Promise<unknown> {
+		async data(url: string, config?: AxiosRequestConfig): Promise<any> {
 			return await (await authenticatedMoodleClient.get(url, config))
 				.data;
 		},
 	};
 }
 
-async function getCourseIds(
-	moodleClient: AxiosInstance
-): Promise<Array<number>> {
+async function getCourseIds(moodleClient: any): Promise<Array<number>> {
 	const document = parse(
-		await moodleClient.get("/my/index.php?coc-manage=1")
+		await moodleClient.data("/my/index.php?coc-manage=1")
 	);
 	const courseIds = document
 		.querySelectorAll("#coc-courselist .coc-course")
@@ -42,11 +40,10 @@ async function getCourseIds(
 	return courseIds;
 }
 
-async function getCourseData(
-	moodleClient: AxiosInstance,
-	id: number
-): Promise<Course> {
-	const document = parse(await moodleClient.get(`/course/view.php?id=${id}`));
+async function getCourseData(moodleClient: any, id: number): Promise<Course> {
+	const document = parse(
+		await moodleClient.data(`/course/view.php?id=${id}`)
+	);
 	const title = document.querySelector(".page-header-headings").innerText;
 	const sectionElements = document.querySelectorAll(".section.main");
 	const sections = sectionElements.map(getSectionData);
@@ -164,9 +161,7 @@ function removeNestedWrapperElements(
 	return element;
 }
 
-export async function getMoodleData(
-	moodleClient: AxiosInstance
-): Promise<MoodleCourses> {
+export async function getMoodleData(moodleClient: any): Promise<MoodleCourses> {
 	const courseIds = await getCourseIds(moodleClient);
 	const allCourseData = await Promise.all(
 		courseIds.map((id) => getCourseData(moodleClient, id))

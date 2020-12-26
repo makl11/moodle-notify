@@ -1,3 +1,4 @@
+import { AxiosResponse } from "axios";
 import { readFileSync, writeFileSync } from "fs";
 import { Builder, By, IWebDriverCookie, WebDriver } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
@@ -138,11 +139,32 @@ function getChangedCourseSection(
 		?.sections.find((section) => section.id === sectionId);
 }
 
+async function createAuthMoodleClientFromLocalCookiesOrAuthenticate() {
+	try {
+		const localCookies = readFileSync(`./data/cookies.txt`).toString();
+		const moodleClient = await createAuthMoodleClientWithCookies(
+			localCookies
+		);
+		const isAuthenticated = await moodleClient
+			.get(`/my/`)
+			.then(
+				(response: AxiosResponse) =>
+					response.request.path !== "/?redirect=0"
+			);
+		if (isAuthenticated) return moodleClient;
+		else throw new Error("Not authenticated");
+	} catch (_) {
+		debugger;
+		const cookies = createHeaderCookieString(
+			await getAuthCookies(USERNAME, PASSWORD)
+		);
+		writeFileSync(`./data/cookies.txt`, cookies);
+		return await createAuthMoodleClientWithCookies(cookies);
+	}
+}
+
 (async () => {
-	const cookies = createHeaderCookieString(
-		await getAuthCookies(USERNAME, PASSWORD)
-	);
-	const moodleClient = await createAuthMoodleClientWithCookies(cookies);
+	const moodleClient = await createAuthMoodleClientFromLocalCookiesOrAuthenticate();
 
 	const moodleData = await getMoodleData(moodleClient);
 
