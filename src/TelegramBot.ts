@@ -1,5 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
-import { readFileSync, writeFileSync } from "fs";
+import { promises as fs } from 'fs';
+const { writeFile, readFile } = fs;
 import { run } from "./index";
 
 const TELEGRAM_TOKEN: string =
@@ -7,10 +8,11 @@ const TELEGRAM_TOKEN: string =
 
 const telegramBot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
-const getAllUsers = (): Array<number> =>
-	JSON.parse(readFileSync(`./data/users.json`).toString());
-const saveAllUsers = (users: Array<number>) =>
-	writeFileSync(`./data/users.json`, JSON.stringify(users));
+const getAllUsers = async (): Promise<Array<number>> => 
+	JSON.parse((await readFile(`./data/users.json`).catch()).toString())
+
+const saveAllUsers = async (users: Array<number>) =>
+	await writeFile(`./data/users.json`, JSON.stringify(users));
 
 telegramBot.setMyCommands([
 	{
@@ -30,19 +32,19 @@ telegramBot.setMyCommands([
 	},
 ]);
 
-telegramBot.onText(/\/subscribe/, (msg) => {
+telegramBot.onText(/\/subscribe/, async (msg) => {
 	const chatId = msg.chat.id;
-	const allUsers = getAllUsers();
+	const allUsers = await getAllUsers();
 	if (allUsers.includes(chatId))
 		return telegramBot.sendMessage(chatId, "Already subscribed!");
 	saveAllUsers([...allUsers, chatId]);
 	return telegramBot.sendMessage(chatId, "Subscribed!");
 });
 
-telegramBot.onText(/\/unsubscribe/, (msg) => {
+telegramBot.onText(/\/unsubscribe/, async (msg) => {
 	const chatId = msg.chat.id;
-	const allUsers = getAllUsers();
-	saveAllUsers(allUsers.filter((id) => id !== chatId));
+	const allUsers = await getAllUsers();
+	await saveAllUsers(allUsers.filter((id) => id !== chatId));
 	telegramBot.sendMessage(chatId, "Unsubscribed!");
 });
 
