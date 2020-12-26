@@ -173,8 +173,8 @@ async function sendTelegramNotification(
 	const telegramBot = new TelegramBot(TELEGRAM_TOKEN);
 
 	if (!changedCourses.length && msg) {
-		telegramBot.sendMessage(msg.chat.id, "No changed courses found");
-	}
+		return telegramBot.sendMessage(msg.chat.id, "No changed courses found");
+	} else if (!changedCourses.length) return null;
 
 	const allUserIds: Array<number> = JSON.parse(
 		readFileSync(`./data/users.json`).toString()
