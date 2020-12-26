@@ -10,8 +10,8 @@ interface CourseSection {
 	id: number;
 	hash: string;
 	title: string;
-	summary?: string;
-	content?: CourseSectionContent;
+	summary: string | undefined;
+	content: CourseSectionContent | undefined;
 	available: AvailabilityStatus;
 }
 
@@ -19,7 +19,7 @@ type CourseSectionContent = Array<ContentBlock> | undefined;
 
 interface ContentBlock {
 	id: number;
-	modtype?: string;
+	modtype: string | undefined;
 }
 
 interface LinkContentBlock extends ContentBlock {
