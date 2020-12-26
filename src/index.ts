@@ -1,6 +1,7 @@
 import { AxiosResponse } from "axios";
-import { promises as fs } from 'fs';
 import TelegramBot from "node-telegram-bot-api";
+import { promises as fs } from "fs";
+const { writeFile, readFile } = fs;
 import { Builder, By, IWebDriverCookie, WebDriver } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
 import { createAuthMoodleClientWithCookies, getMoodleData } from "./MoodleAPI";
@@ -37,8 +38,8 @@ async function getAuthCookies(
 			.setChromeOptions(
 				DEBUG
 					? new Options().addArguments(
-							"--auto-open-devtools-for-tabs"
-					  )
+						"--auto-open-devtools-for-tabs"
+					)
 					: new Options().headless()
 			)
 			.build();
@@ -53,7 +54,7 @@ async function getAuthCookies(
 	} catch (error) {
 		throw error;
 	} finally {
-		seleniumDriver?.quit();
+		setTimeout(() => seleniumDriver?.quit(), 1000);
 	}
 }
 function createHeaderCookieString(cookies: Array<IWebDriverCookie>): string {
@@ -71,9 +72,9 @@ const compareSections = (
 	oldSection === undefined || newSection === undefined
 		? false
 		: oldSection.title === newSection.title &&
-		  oldSection.summary === newSection.summary &&
-		  oldSection.available === newSection.available &&
-		  compareSectionContent(oldSection.content, newSection.content);
+		oldSection.summary === newSection.summary &&
+		oldSection.available === newSection.available &&
+		compareSectionContent(oldSection.content, newSection.content);
 
 const compareTextBlocks = (a: TextContentBlock, b: TextContentBlock) => {
 	return a.text === b.text;
@@ -101,14 +102,14 @@ function compareSectionContent(
 				);
 				return equal && oldContentBlock && newContentBlock?.html
 					? // @ts-ignore
-					  compareHTMLBlocks(oldContentBlock, newContentBlock)
+					compareHTMLBlocks(oldContentBlock, newContentBlock)
 					: newContentBlock?.text
-					? // @ts-ignore
-					  compareTextBlocks(oldContentBlock, newContentBlock)
-					: newContentBlock?.url
-					? // @ts-ignore
-					  compareLinkBlocks(oldContentBlock, newContentBlock)
-					: false;
+						? // @ts-ignore
+						compareTextBlocks(oldContentBlock, newContentBlock)
+						: newContentBlock?.url
+							? // @ts-ignore
+							compareLinkBlocks(oldContentBlock, newContentBlock)
+							: false;
 			},
 			true
 		);
@@ -143,7 +144,9 @@ function getChangedCourseSection(
 
 async function createAuthMoodleClientFromLocalCookiesOrAuthenticate() {
 	try {
-		const localCookies = (await fs.readFile(`./data/cookies.txt`).catch()).toString();
+		const localCookies = (
+			await readFile(`./data/cookies.txt`).catch()
+		).toString();
 		const moodleClient = await createAuthMoodleClientWithCookies(
 			localCookies
 		);
@@ -156,11 +159,10 @@ async function createAuthMoodleClientFromLocalCookiesOrAuthenticate() {
 		if (isAuthenticated) return moodleClient;
 		else throw new Error("Not authenticated");
 	} catch (_) {
-		debugger;
 		const cookies = createHeaderCookieString(
 			await getAuthCookies(USERNAME, PASSWORD)
 		);
-		await fs.writeFile(`./data/cookies.txt`, cookies).catch();
+		await writeFile(`./data/cookies.txt`, cookies).catch();
 		return await createAuthMoodleClientWithCookies(cookies);
 	}
 }
@@ -176,7 +178,7 @@ async function sendTelegramNotification(
 	} else if (!changedCourses.length) return null;
 
 	const allUserIds: Array<number> = JSON.parse(
-		(await fs.readFile(`./data/users.json`).catch()).toString()
+		(await readFile(`./data/users.json`).catch()).toString()
 	);
 
 	allUserIds.forEach(async (id) => {
@@ -212,7 +214,7 @@ export const run = async (msg?: TelegramBot.Message) => {
 	const moodleData = await getMoodleData(moodleClient);
 
 	const oldMoodleData: MoodleCourses = JSON.parse(
-		(await fs.readFile(`./data/data.json`).catch()).toString()
+		(await readFile(`./data/data.json`).catch()).toString()
 	);
 
 	const changedCourses = oldMoodleData
@@ -231,7 +233,7 @@ export const run = async (msg?: TelegramBot.Message) => {
 
 	await sendTelegramNotification(changedCourses, msg);
 
-	await fs.writeFile(`./data/data.json`, JSON.stringify(moodleData)).catch();
+	await writeFile(`./data/data.json`, JSON.stringify(moodleData)).catch();
 
 	// moodleData.forEach((course) => {
 	// 	writeFileSync(
