@@ -1,0 +1,33 @@
+{
+  "name": "moodle-notify",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsc && node .",
+    "start:bot": "tsc && node ./dist/TelegramBot.js",
+    "test": "echo \"no test specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "form-data": "^3.0.0",
+    "jsdom": "^16.4.0",
+    "md5": "^2.3.0",
+    "node-html-parser": "^2.0.0",
+    "node-telegram-bot-api": "^0.50.0",
+    "selenium-webdriver": "^4.0.0-alpha.7",
+    "showdown": "^1.9.1",
+    "turndown": "^7.0.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.7",
+    "@types/axios": "^0.14.0",
+    "@types/md5": "^2.2.1",
+    "@types/node": "^14.14.10",
+    "@types/node-telegram-bot-api": "^0.50.4",
+    "@types/selenium-webdriver": "^4.0.10"
+  }
+}
