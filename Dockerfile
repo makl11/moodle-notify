@@ -1,7 +1,14 @@
 FROM node:current-alpine
-WORKDIR /home/node/app
-COPY ./package.json /home/node/app
+ENV MOODLE_NOTIFY_DEBUG=0
+ENV MOODLE_NOTIFY_USERNAME=
+ENV MOODLE_NOTIFY_PASSWORD=
+ENV MOODLE_NOTIFY_TELEGRAM_TOKEN=
+ENV MOODLE_NOTIFY_SELENIUM_SERVER=
+ENV SELENIUM_REMOTE_URL=http://localhost:4444
+WORKDIR /app
+COPY package.json .
 RUN npm install
-COPY dist/* /home/node/app
-COPY ./cronscript.sh /etc/periodic/15min/
-CMD [ "npm", "start" ]
+COPY . .
+RUN npm run build
+COPY cronscript.sh /etc/periodic/15min/
+CMD [ "npm", "run", "start:bot" ]
