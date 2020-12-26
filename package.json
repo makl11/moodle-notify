@@ -5,7 +5,7 @@
 	"scripts": {
 		"start": "npm run build && node dist/index.js",
 		"start:bot": "npm run build && node dist/TelegramBot.js",
-		"build": "npx rimraf ./dist && tsc",
+		"build": "npx rimraf ./dist && tsc -p .",
 		"test": "echo \"no test specified\" && exit 0"
 	},
 	"keywords": [],
