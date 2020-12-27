@@ -1,10 +1,11 @@
 import { AxiosResponse } from "axios";
-import TelegramBot from "node-telegram-bot-api";
 import { promises as fs } from "fs";
-const { writeFile, readFile } = fs;
+import TelegramBot from "node-telegram-bot-api";
 import { Builder, By, IWebDriverCookie, WebDriver } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
 import { createAuthMoodleClientWithCookies, getMoodleData } from "./MoodleAPI";
+const { writeFile, readFile } = fs;
+
 const DEBUG: boolean = JSON.parse(
 	process.env["MOODLE_NOTIFY_DEBUG"]?.toLocaleLowerCase() ?? "false"
 );
@@ -168,12 +169,14 @@ async function createAuthMoodleClientFromLocalCookiesOrAuthenticate() {
 }
 
 async function sendTelegramNotification(
+	telegramBot: TelegramBot,
 	changedCourses: any,
 	msg?: TelegramBot.Message
 ) {
-	const telegramBot = new TelegramBot(TELEGRAM_TOKEN);
-
 	if (!changedCourses.length && msg) {
+		console.log(
+			`[MOODLE-NOTIFY] (${new Date().toLocaleString()}): No updates found!`
+		);
 		return telegramBot.sendMessage(msg.chat.id, "No changed courses found");
 	} else if (!changedCourses.length) return null;
 
@@ -206,12 +209,17 @@ async function sendTelegramNotification(
 			}
 		);
 	});
+	console.log(
+		`[MOODLE-NOTIFY] (${new Date().toLocaleString()}): Updates found and notifications sent`
+	);
 }
 
 export const run = async (msg?: TelegramBot.Message) => {
 	console.log(
 		`[MOODLE-NOTIFY] (${new Date().toLocaleString()}): Checking for updates...`
 	);
+	const telegramBot = new TelegramBot(TELEGRAM_TOKEN);
+
 	const moodleClient = await createAuthMoodleClientFromLocalCookiesOrAuthenticate();
 
 	const moodleData = await getMoodleData(moodleClient);
@@ -234,7 +242,7 @@ export const run = async (msg?: TelegramBot.Message) => {
 			),
 		}));
 
-	await sendTelegramNotification(changedCourses, msg);
+	await sendTelegramNotification(telegramBot, changedCourses, msg);
 
 	await writeFile(`./data/data.json`, JSON.stringify(moodleData)).catch();
 
