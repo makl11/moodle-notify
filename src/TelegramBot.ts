@@ -1,15 +1,15 @@
 import TelegramBot from "node-telegram-bot-api";
-import { promises as fs } from 'fs';
+import { promises as fs } from "fs";
 const { writeFile, readFile } = fs;
-import { run } from "./index";
+import { checkForChangedCourses } from "./index";
 
 const TELEGRAM_TOKEN: string =
 	process.env["MOODLE_NOTIFY_TELEGRAM_TOKEN"] ?? "";
 
 const telegramBot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
-const getAllUsers = async (): Promise<Array<number>> => 
-	JSON.parse((await readFile(`./data/users.json`).catch()).toString())
+const getAllUsers = async (): Promise<Array<number>> =>
+	JSON.parse((await readFile(`./data/users.json`).catch()).toString());
 
 const saveAllUsers = async (users: Array<number>) =>
 	await writeFile(`./data/users.json`, JSON.stringify(users));
@@ -18,17 +18,16 @@ telegramBot.setMyCommands([
 	{
 		command: "subscribe",
 		description:
-			"Join the list of users that get notified about changes in the Moodle courses",
+			"Join the list of users that get notified about changes in their Moodle courses",
 	},
 	{
 		command: "unsubscribe",
 		description:
-			"Leave the list of users that get notified about changes in the Moodle courses",
+			"Leave the list of users that get notified about changes in their Moodle courses",
 	},
 	{
 		command: "check",
-		description:
-			"Check for changes in the Moodle courses",
+		description: "Check for changes in the Moodle courses",
 	},
 ]);
 
@@ -48,4 +47,11 @@ telegramBot.onText(/\/unsubscribe/, async (msg) => {
 	telegramBot.sendMessage(chatId, "Unsubscribed!");
 });
 
-telegramBot.onText(/\/check/, run);
+telegramBot.onText(/\/check/, async (msg) =>
+	checkForChangedCourses(msg, telegramBot)
+);
+
+setInterval(
+	() => checkForChangedCourses(undefined, telegramBot),
+	5 * 60 * 1000
+);
